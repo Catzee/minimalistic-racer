@@ -70,7 +70,7 @@ public class CarPhysics : MonoBehaviour
         float lateralDrift = -Vector3.Dot(lateralForceDirection, velocity);
         float gripByLateralDrift = 0.75f - lateralDrift;
         velocity += lateralForceDirection * maxGrip * gripByLateralDrift;
-        print(gripByLateralDrift);
+        //print(gripByLateralDrift);
 
         transform.position += velocity;
         //print(velocity.magnitude + " " + driftAngleSigned + " " + driftAngle);
