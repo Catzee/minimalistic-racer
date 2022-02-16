@@ -1023,8 +1023,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   acceleration: 0.3
   maxTurnRate: 9
-  turnDampening: 0.98
-  maxGrip: 0.004
+  turnDampening: 0.97
+  maxGrip: 0.005
   accelerationDropOff: 0.25
 --- !u!4 &1588791013
 Transform:
