@@ -32,8 +32,13 @@ public class CarPhysics : MonoBehaviour
     {
         float deltaTime = Time.fixedDeltaTime;
 
-        //control input
-        float turnInput = Input.GetKey(KeyCode.A) ? -1f : Input.GetKey(KeyCode.D) ? 1f : 0f;
+        //control input, added keyboard just for debugging
+        float turnInput = InputManager.steerLeftPressed ? -1f : InputManager.steerRightPressed ? 1f : 0f;
+        bool keyboardDebugControls = true;
+        if (keyboardDebugControls)
+        {
+            turnInput += Input.GetKey(KeyCode.A) ? -1f : Input.GetKey(KeyCode.D) ? 1f : 0f;
+        }
 
         //turning
         turnRate = (turnRate + turnInput * maxTurnRate * deltaTime) * turnDampening;
