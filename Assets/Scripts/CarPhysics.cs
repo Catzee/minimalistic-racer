@@ -37,6 +37,16 @@ public class CarPhysics : MonoBehaviour
     {
         float deltaTime = Time.fixedDeltaTime;
         velocity = rb.velocity * deltaTime;
+        float driftAngle = Vector3.Angle(velocity, transform.forward);
+        if (driftAngle > 180f)
+        {
+            driftAngle = 180f - driftAngle;
+        }
+        float driftAngleSigned = driftAngle;
+        if (Vector3.Cross(velocity, transform.forward).y < 0f)
+        {
+            driftAngleSigned = -driftAngleSigned;
+        }
         Vector3 forceThisFrame = Vector3.zero;
 
         //control input, added keyboard just for debugging
@@ -46,7 +56,18 @@ public class CarPhysics : MonoBehaviour
         if (keyboardDebugControls)
         {
             turnInput += Input.GetKey(KeyCode.A) ? -1f : Input.GetKey(KeyCode.D) ? 1f : 0f;
-            turnRateFactor = turnRateFactor * (Input.GetKey(KeyCode.Space) ? 3f : 1f); //todo: only allow for steering, not countersteering
+        }
+        bool isCountersteering = (driftAngleSigned > 5f && turnInput < 0f) || (driftAngleSigned < -5f && turnInput > 0f);
+        if (isCountersteering)
+        {
+            turnRateFactor *= 0.5f;
+        }else if (keyboardDebugControls)
+        {
+            //turnRateFactor = turnRateFactor * (Input.GetKey(KeyCode.Space) ? 3f : 1f); //todo: only allow for steering, not countersteering
+        }
+        if (Input.GetKey(KeyCode.Space))
+        {
+            turnRate *= 1.05f;
         }
 
         //turning
@@ -59,20 +80,6 @@ public class CarPhysics : MonoBehaviour
         float accelerationFactor = Mathf.Max(0.05f, 1f - 0.5f * speedInForwardDirection / accelerationDropOff);
         //velocity += transform.forward * acceleration * accelerationFactor * deltaTime;
         forceThisFrame = transform.forward * acceleration * accelerationFactor * deltaTime;
-
-        //grip
-        float driftAngle = Vector3.Angle(velocity, transform.forward);
-        if(driftAngle > 180f)
-        {
-            driftAngle = 180f - driftAngle;
-        }
-        float driftAngleSigned = driftAngle;
-        if (Vector3.Cross(velocity, transform.forward).y < 0f)
-        {
-            driftAngleSigned = -driftAngleSigned;
-        }
-        float gripBraking = maxGrip * driftAngle / 90f;
-        //velocity = velocity * (1f - gripBraking);
 
         //real grip
         if(driftAngle > 0.1f)

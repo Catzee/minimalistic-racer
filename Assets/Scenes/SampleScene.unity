@@ -3286,9 +3286,9 @@ MonoBehaviour:
   rb: {fileID: 1588791014}
   acceleration: 12
   maxTurnRate: 3.5
-  turnDampening: 0.97
+  turnDampening: 0.98
   maxGrip: 0.2
-  accelerationDropOff: 0.2
+  accelerationDropOff: 0.22
   gripFromAeroDyamicsFactor: 0.5
   accelerationForceFactor: 1
 --- !u!4 &1588791013
@@ -3325,7 +3325,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!1 &1588890025
 GameObject:
