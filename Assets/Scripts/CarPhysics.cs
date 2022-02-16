@@ -4,12 +4,17 @@ using UnityEngine;
 
 public class CarPhysics : MonoBehaviour
 {
+    //references
+    public Rigidbody rb;
+
     //car stats
     public float acceleration = 1f;
     public float maxTurnRate = 1f;
     public float turnDampening = 0.9f;
     public float maxGrip = 0.02f;
     public float accelerationDropOff = 10f;
+    public float gripFromAeroDyamicsFactor = 0.5f;
+    public float accelerationForceFactor = 100f;
 
     //car data
     Vector3 velocity = Vector3.zero;
@@ -31,24 +36,30 @@ public class CarPhysics : MonoBehaviour
     void FixedUpdate()
     {
         float deltaTime = Time.fixedDeltaTime;
+        velocity = rb.velocity * deltaTime;
+        Vector3 forceThisFrame = Vector3.zero;
 
         //control input, added keyboard just for debugging
+        float turnRateFactor = maxTurnRate;
         float turnInput = InputManager.steerLeftPressed ? -1f : InputManager.steerRightPressed ? 1f : 0f;
         bool keyboardDebugControls = true;
         if (keyboardDebugControls)
         {
             turnInput += Input.GetKey(KeyCode.A) ? -1f : Input.GetKey(KeyCode.D) ? 1f : 0f;
+            turnRateFactor = turnRateFactor * (Input.GetKey(KeyCode.Space) ? 3f : 1f); //todo: only allow for steering, not countersteering
         }
 
         //turning
-        turnRate = (turnRate + turnInput * maxTurnRate * deltaTime) * turnDampening;
+        turnRate = (turnRate + turnInput * turnRateFactor * deltaTime) * turnDampening;
         transform.Rotate(new Vector3(0f, turnRate, 0f));
+        //rb.MoveRotation(Quaternion.Euler(Quaternion.Euler(new Vector3(0f, turnRate, 0f)) * transform.forward));
 
         //car physics
         float speedInForwardDirection = Mathf.Max(0f, Vector3.Dot(velocity, transform.forward));
         float accelerationFactor = Mathf.Max(0.05f, 1f - 0.5f * speedInForwardDirection / accelerationDropOff);
-        velocity += transform.forward * acceleration * accelerationFactor * deltaTime;
-        
+        //velocity += transform.forward * acceleration * accelerationFactor * deltaTime;
+        forceThisFrame = transform.forward * acceleration * accelerationFactor * deltaTime;
+
         //grip
         float driftAngle = Vector3.Angle(velocity, transform.forward);
         if(driftAngle > 180f)
@@ -74,10 +85,15 @@ public class CarPhysics : MonoBehaviour
         Vector3 lateralForceDirection = (Quaternion.Euler(0f, driftAngleSigned >= 0f ? 90f : -90f, 0f) * transform.forward).normalized;
         float lateralDrift = -Vector3.Dot(lateralForceDirection, velocity);
         float gripByLateralDrift = 0.75f - lateralDrift;
-        velocity += lateralForceDirection * maxGrip * gripByLateralDrift;
+        float gripFromAeroDynamics = 1f + velocity.magnitude * gripFromAeroDyamicsFactor;
+        //print(gripFromAeroDynamics);
+        forceThisFrame += lateralForceDirection * maxGrip * gripByLateralDrift * gripFromAeroDynamics;
         //print(gripByLateralDrift);
 
-        transform.position += velocity;
+        //rb.MovePosition(rb.position + velocity);
+        rb.AddForce(forceThisFrame, ForceMode.Impulse);
+        //transform.position += velocity;
+        //rb.velocity = velocity / deltaTime;
         //print(velocity.magnitude + " " + driftAngleSigned + " " + driftAngle);
     }
 }
