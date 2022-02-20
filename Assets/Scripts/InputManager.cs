@@ -32,4 +32,9 @@ public class InputManager : MonoBehaviour
     {
         steerRightPressed = false;
     }
+
+    public void LoadTrackButtonClicked(int trackIndex)
+    {
+        GameManager.GetInstance().LoadTrack(trackIndex);
+    }
 }

@@ -6,6 +6,7 @@ public class CarPhysics : MonoBehaviour
 {
     //references
     public Rigidbody rb;
+    public Transform[] wheels;
 
     //car stats
     public float acceleration = 1f;
@@ -15,8 +16,9 @@ public class CarPhysics : MonoBehaviour
     public float accelerationDropOff = 10f;
     public float gripFromAeroDyamicsFactor = 0.5f;
     public float accelerationForceFactor = 100f;
+    public float wheelModelSteeringAngle = 30f;
 
-    //car data
+    //internal car data
     Vector3 velocity = Vector3.zero;
     float turnRate = 0f;
 
@@ -35,6 +37,10 @@ public class CarPhysics : MonoBehaviour
 
     void FixedUpdate()
     {
+        if(!(GameManager.GetGameState() == GameManager.GAME_STATE_RACING))
+        {
+            return;
+        }
         float deltaTime = Time.fixedDeltaTime;
         velocity = rb.velocity * deltaTime;
         float driftAngle = Vector3.Angle(velocity, transform.forward);
@@ -57,13 +63,11 @@ public class CarPhysics : MonoBehaviour
         {
             turnInput += Input.GetKey(KeyCode.A) ? -1f : Input.GetKey(KeyCode.D) ? 1f : 0f;
         }
+        SetSteeringAngleForWheelModels(turnInput * wheelModelSteeringAngle);
         bool isCountersteering = (driftAngleSigned > 5f && turnInput < 0f) || (driftAngleSigned < -5f && turnInput > 0f);
         if (isCountersteering)
         {
             turnRateFactor *= 0.5f;
-        }else if (keyboardDebugControls)
-        {
-            //turnRateFactor = turnRateFactor * (Input.GetKey(KeyCode.Space) ? 3f : 1f); //todo: only allow for steering, not countersteering
         }
         if (Input.GetKey(KeyCode.Space))
         {
@@ -73,34 +77,37 @@ public class CarPhysics : MonoBehaviour
         //turning
         turnRate = (turnRate + turnInput * turnRateFactor * deltaTime) * turnDampening;
         transform.Rotate(new Vector3(0f, turnRate, 0f));
-        //rb.MoveRotation(Quaternion.Euler(Quaternion.Euler(new Vector3(0f, turnRate, 0f)) * transform.forward));
 
-        //car physics
+        //acceleration
         float speedInForwardDirection = Mathf.Max(0f, Vector3.Dot(velocity, transform.forward));
         float accelerationFactor = Mathf.Max(0.05f, 1f - 0.5f * speedInForwardDirection / accelerationDropOff);
-        //velocity += transform.forward * acceleration * accelerationFactor * deltaTime;
         forceThisFrame = transform.forward * acceleration * accelerationFactor * deltaTime;
 
-        //real grip
-        if(driftAngle > 0.1f)
-        {
-            //Vector3 lateralForceDirection = (Quaternion.Euler(0f, driftAngleSigned >= 0f ? 90f : -90f, 0f) * transform.forward).normalized;
-            //velocity += lateralForceDirection * maxGrip;
-        }
 
-        //real grip test
+        //sideways grip
         Vector3 lateralForceDirection = (Quaternion.Euler(0f, driftAngleSigned >= 0f ? 90f : -90f, 0f) * transform.forward).normalized;
         float lateralDrift = -Vector3.Dot(lateralForceDirection, velocity);
         float gripByLateralDrift = 0.75f - lateralDrift;
         float gripFromAeroDynamics = 1f + velocity.magnitude * gripFromAeroDyamicsFactor;
-        //print(gripFromAeroDynamics);
         forceThisFrame += lateralForceDirection * maxGrip * gripByLateralDrift * gripFromAeroDynamics;
-        //print(gripByLateralDrift);
 
-        //rb.MovePosition(rb.position + velocity);
+        //apply result
         rb.AddForce(forceThisFrame, ForceMode.Impulse);
-        //transform.position += velocity;
-        //rb.velocity = velocity / deltaTime;
-        //print(velocity.magnitude + " " + driftAngleSigned + " " + driftAngle);
+    }
+
+    private void SetSteeringAngleForWheelModels(float angle)
+    {
+        //smooth it a bit so it looks a bit nicer
+        wheels[0].transform.localRotation = Quaternion.Slerp(wheels[0].transform.localRotation, Quaternion.Euler(0f, angle, 90f), Time.fixedDeltaTime * 10f);
+        wheels[1].transform.localRotation = Quaternion.Slerp(wheels[1].transform.localRotation, Quaternion.Euler(0f, angle, 90f), Time.fixedDeltaTime * 10f);
+    }
+
+    public void ResetCarPhysics()
+    {
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        velocity = Vector3.zero;
+        turnRate = 0f;
+        transform.forward = Vector3.forward;
     }
 }
