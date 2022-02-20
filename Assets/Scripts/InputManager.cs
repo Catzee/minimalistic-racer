@@ -37,4 +37,11 @@ public class InputManager : MonoBehaviour
     {
         GameManager.GetInstance().LoadTrack(trackIndex);
     }
+
+    public void PickCarButtonClicked(int carIndex)
+    {
+        GameManager.GetInstance().carPhysics.accelerationDropOff = CarManager.instance.carSpeedStats[carIndex];
+        GameManager.GetInstance().carPhysics.maxTurnRate = CarManager.instance.carTurnrateStats[carIndex];
+        GameManager.GetInstance().carPhysics.ResetCar();
+    }
 }

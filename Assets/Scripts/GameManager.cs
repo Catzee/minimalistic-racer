@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
 
     //Track Management
     private GameObject currentTrack = null;
+    private int currentTrackIndex = -1;
     private AsyncOperationHandle<GameObject> trackLoadHandle;
     private bool trackIsLoading = false;
     public Transform spawnPosition;
@@ -50,13 +51,14 @@ public class GameManager : MonoBehaviour
         gameState = newState;
         if(gameState == GAME_STATE_PAUSED)
         {
-            carPhysics.ResetCarPhysics();
+            carPhysics.ResetCar();
         }
     }
 
     private void UnloadCurrentTrack()
     {
-        if(currentTrack != null)
+        currentTrackIndex = -1;
+        if (currentTrack != null)
         {
             Destroy(currentTrack);
             Addressables.Release(trackLoadHandle);
@@ -70,6 +72,7 @@ public class GameManager : MonoBehaviour
             SetGameState(GAME_STATE_PAUSED);
             UnloadCurrentTrack();
             trackIsLoading = true;
+            currentTrackIndex = trackIndex;
             string path = "Track" + trackIndex.ToString();
             trackLoadHandle = Addressables.LoadAssetAsync<GameObject>(path);
             trackLoadHandle.Completed += LoadTrackComplete;
@@ -93,11 +96,18 @@ public class GameManager : MonoBehaviour
     private void InstantiateTrack(GameObject track)
     {
         currentTrack = Instantiate(track, Vector3.zero, Quaternion.identity);
+        CheckpointManager.trackCheckpoints = currentTrack.GetComponent<TrackCheckpoints>().checkpoints;
     }
 
     private void RestartRace()
     {
         SetGameState(GAME_STATE_RACING); //continue racing after track loading
         carPhysics.transform.position = spawnPosition.position;
+        UIManager.SetHighscoreValue(HighscoreManager.GetHighscore(currentTrackIndex));
+    }
+
+    public static int GetCurrentTrackIndex()
+    {
+        return instance.currentTrackIndex;
     }
 }

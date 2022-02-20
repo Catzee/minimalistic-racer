@@ -22,6 +22,11 @@ public class CarPhysics : MonoBehaviour
     Vector3 velocity = Vector3.zero;
     float turnRate = 0f;
 
+    //data on track
+    private int currentCheckpoint = 1;
+    private float lapTime = -1f;
+
+
 
     // Start is called before the first frame update
     void Start()
@@ -93,6 +98,29 @@ public class CarPhysics : MonoBehaviour
 
         //apply result
         rb.AddForce(forceThisFrame, ForceMode.Impulse);
+
+        //time tracking
+        lapTime += Time.fixedDeltaTime;
+        UIManager.SetLaptimeValue(lapTime);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        int checkpointCheckResult = CheckpointManager.IsCheckpointNumber(other.transform);
+        if(checkpointCheckResult == currentCheckpoint)
+        {
+            currentCheckpoint++;
+            bool wasLastCheckpoint = currentCheckpoint >= CheckpointManager.trackCheckpoints.Length;
+            if (wasLastCheckpoint)
+            {
+                currentCheckpoint = 0; //we hit all other checkpoints, now need to hit the finish line which is checkpoint 0
+            }
+            if(checkpointCheckResult == 0)
+            {
+                HighscoreManager.ReportLapTime(lapTime, GameManager.GetCurrentTrackIndex());
+                lapTime = 0f;
+            }
+        }
     }
 
     private void SetSteeringAngleForWheelModels(float angle)
@@ -102,12 +130,16 @@ public class CarPhysics : MonoBehaviour
         wheels[1].transform.localRotation = Quaternion.Slerp(wheels[1].transform.localRotation, Quaternion.Euler(0f, angle, 90f), Time.fixedDeltaTime * 10f);
     }
 
-    public void ResetCarPhysics()
+    public void ResetCar()
     {
+        transform.position = GameManager.GetInstance().spawnPosition.position;
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         velocity = Vector3.zero;
         turnRate = 0f;
         transform.forward = Vector3.forward;
+        currentCheckpoint = 1;
+        lapTime = 0f;
+        UIManager.SetLaptimeValue(lapTime);
     }
 }
