@@ -38,6 +38,7 @@ public class CarPhysics : MonoBehaviour
     void Update()
     {
         UIManager.SetSpeedometer(velocity.magnitude);
+        FindObjectOfType<Animator>().SetFloat("CheeringFactor", velocity.magnitude * 3f);
     }
 
     void FixedUpdate()
@@ -118,6 +119,7 @@ public class CarPhysics : MonoBehaviour
             if(checkpointCheckResult == 0)
             {
                 HighscoreManager.ReportLapTime(lapTime, GameManager.GetCurrentTrackIndex());
+                EventManager.InvokeLapFinishedEvent(lapTime);
                 lapTime = 0f;
             }
         }
